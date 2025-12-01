@@ -1,7 +1,7 @@
 const express = require("express");
 const session = require("express-session");
 const mongoose = require("mongoose");
-const  path = require("path");
+const path = require("path");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 
@@ -15,16 +15,30 @@ dotenv.config();
 const app = express();
 const port = 3000;
 
-// connect to PoolDB
+// MIDDLEWARE: admin protection
+function requireAdmin(req, res, next) {
+  if (!req.session.adminId) {
+    return res.redirect("/login");
+  }
+  next();
+}
+
+// MONGODB CONNECTION (NO top-level await)
 const uri = process.env.MONGODB_CONNECTION_URI;
 if (!uri) {
-  console.error("Error: MONGODB_CONNECTION_URI is not defined in environment variables.");
+  console.error("Error: MONGODB_CONNECTION_URI is not defined.");
   process.exit(1);
 }
 
-await mongoose.connect(uri);
+mongoose
+  .connect(uri)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
-// initialize middleware
+// EXPRESS MIDDLEWARE
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
@@ -35,10 +49,9 @@ app.use(
 );
 
 app.set("view engine", "ejs");
-app.set("views", path.join(process.cwd(), "views"));
+app.set("views", path.join(__dirname, "views"));
 
-// api routes
-
+// ROUTES
 app.get("/", (req, res) => {
   res.redirect("/dashboard");
 });
@@ -54,14 +67,12 @@ app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   const admin = await Admin.findOne({ username });
-  if (!admin) {
+  if (!admin)
     return res.render("login", { error: "Invalid username or password" });
-  }
 
   const valid = await bcrypt.compare(password, admin.passwordHash);
-  if (!valid) {
+  if (!valid)
     return res.render("login", { error: "Invalid username or password" });
-  }
 
   req.session.adminId = admin._id;
   res.redirect("/dashboard");
@@ -71,10 +82,11 @@ app.post("/login", async (req, res) => {
 app.get("/dashboard", requireAdmin, async (req, res) => {
   const admin = await Admin.findById(req.session.adminId);
 
-  // Mining pool data
   const miners = await Miner.find({});
   const workers = await Worker.find({});
-  const shares = await Share.find({}).sort({ timestamp: -1 }).limit(200);
+  const shares = await Share.find({})
+    .sort({ timestamp: -1 })
+    .limit(200);
 
   res.render("dashboard", {
     admin,
@@ -86,12 +98,10 @@ app.get("/dashboard", requireAdmin, async (req, res) => {
 
 // LOGOUT
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/login");
-  });
+  req.session.destroy(() => res.redirect("/login"));
 });
 
-// starrt the app
+// START SERVER
 app.listen(port, () => {
   console.log(`Admin panel running at http://localhost:${port}`);
 });
