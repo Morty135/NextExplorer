@@ -1,20 +1,21 @@
-import express from "express";
-import session from "express-session";
-import mongoose from "mongoose";
-import path from "path";
-import dotenv from "dotenv";
+const express = require("express");
+const session = require("express-session");
+const mongoose = require("mongoose");
+const  path = require("path");
+const dotenv = require("dotenv");
+const bcrypt = require("bcryptjs");
 
-import Admin from "./models/admin.js";
-import Miner from "./models/miner.js";
-import Worker from "./models/worker.js";
-import Share from "./models/shares.js";
+const Admin = require("./models/admin.js");
+const Miner = require("./models/miner.js");
+const Worker = require("./models/worker.js");
+const Share = require("./models/shares.js");
 
 dotenv.config();
 
 const app = express();
 const port = 3000;
 
-// --- MONGODB AUTH CONNECTION ---
+// connect to PoolDB
 const uri = process.env.MONGODB_CONNECTION_URI;
 if (!uri) {
   console.error("Error: MONGODB_CONNECTION_URI is not defined in environment variables.");
@@ -23,11 +24,11 @@ if (!uri) {
 
 await mongoose.connect(uri);
 
-// --- MIDDLEWARE ---
+// initialize middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: "this_should_be_long_and_random",
+    secret: "randomthingadwojawdjpa",
     resave: false,
     saveUninitialized: false
   })
@@ -36,15 +37,8 @@ app.use(
 app.set("view engine", "ejs");
 app.set("views", path.join(process.cwd(), "views"));
 
-// --- LOGIN GUARD ---
-function requireAdmin(req, res, next) {
-  if (!req.session.adminId) return res.redirect("/login");
-  next();
-}
+// api routes
 
-// --- ROUTES ---
-
-// Redirect root → dashboard
 app.get("/", (req, res) => {
   res.redirect("/dashboard");
 });
@@ -97,6 +91,7 @@ app.get("/logout", (req, res) => {
   });
 });
 
-// --- START SERVER ---
+// starrt the app
 app.listen(port, () => {
-  console.log(`Admin panel runnin
+  console.log(`Admin panel running at http://localhost:${port}`);
+});
