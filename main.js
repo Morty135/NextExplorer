@@ -3,7 +3,6 @@ const session = require("express-session");
 const mongoose = require("mongoose");
 const path = require("path");
 const dotenv = require("dotenv");
-const bcrypt = require("bcryptjs");
 
 const Admin = require("./models/admin.js");
 const Miner = require("./models/miner.js");
@@ -13,9 +12,8 @@ const Share = require("./models/shares.js");
 dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 
-// MIDDLEWARE: admin protection
 function requireAdmin(req, res, next) {
   if (!req.session.adminId) {
     return res.redirect("/login");
@@ -23,7 +21,6 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// MONGODB CONNECTION (NO top-level await)
 const uri = process.env.MONGODB_CONNECTION_URI;
 if (!uri) {
   console.error("Error: MONGODB_CONNECTION_URI is not defined.");
@@ -38,7 +35,6 @@ mongoose
     process.exit(1);
   });
 
-// EXPRESS MIDDLEWARE
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
@@ -48,37 +44,43 @@ app.use(
   })
 );
 
+
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// ROUTES
 app.get("/", (req, res) => {
   res.redirect("/dashboard");
 });
 
-// LOGIN PAGE
+
+
 app.get("/login", (req, res) => {
   if (req.session.adminId) return res.redirect("/dashboard");
   res.render("login");
 });
 
-// LOGIN SUBMIT
+
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   const admin = await Admin.findOne({ username });
   if (!admin)
+  {
     return res.render("login", { error: "Invalid username or password" });
-
-  const valid = await bcrypt.compare(password, admin.passwordHash);
-  if (!valid)
+  }
+  if (password !== admin.password)
+  {
     return res.render("login", { error: "Invalid username or password" });
-
+  }
   req.session.adminId = admin._id;
   res.redirect("/dashboard");
 });
 
-// DASHBOARD
+
+
+// dashboard site
 app.get("/dashboard", requireAdmin, async (req, res) => {
   const admin = await Admin.findById(req.session.adminId);
 
@@ -88,20 +90,56 @@ app.get("/dashboard", requireAdmin, async (req, res) => {
     .sort({ timestamp: -1 })
     .limit(200);
 
+  req.session.flash = req.session.flash || {};
+  const flash = req.session.flash;
+  req.session.flash = {};
+
   res.render("dashboard", {
     admin,
     miners,
     workers,
-    shares
+    shares,
+    success: flash.success,
+    error: flash.error
   });
 });
 
-// LOGOUT
+
+
+app.post("/addminer", async (req, res) =>{
+  const { username, password } = req.body;
+  try 
+  {
+    const newMiner = new Miner({
+      username: username,
+      password: password
+    });
+    await newMiner.save();
+    req.session.flash = { success: "Miner added successfully." };
+    res.redirect("/dashboard");
+  }
+  catch (error) 
+  {
+    req.session.flash = { error: "Error adding miner: " + error.message };
+    res.redirect("/dashboard");
+  }
+});
+
+
+
+app.post("/deleteminer", (req, res) =>{
+  const { username } = req.body;
+  Miner.findOneAndDelete({ username: username }).then(() => res.redirect("/dashboard"));
+});
+
+
+
 app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
 });
 
-// START SERVER
+
+
 app.listen(port, () => {
   console.log(`Admin panel running at http://localhost:${port}`);
 });

@@ -20,7 +20,40 @@
     <a href="/logout">Logout</a>
   </div>
 
-  <!-- MINERS -->
+  <% if (success) { %>
+    <div style="padding:10px; background:#d4edda; color:#155724; border:1px solid #c3e6cb; margin-bottom:10px;">
+      <%= success %>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div style="padding:10px; background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; margin-bottom:10px;">
+      <%= error %>
+    </div>
+  <% } %>
+
+  <!-- Add miner -->
+  <h2>Add Miner</h2>
+  <form action="/addminer" method="POST" style="margin-bottom:20px;">
+    <label>Username:</label>
+    <input type="text" name="username" required>
+
+    <label>Password:</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">Add Miner</button>
+  </form>
+
+  <!-- Delete miner -->
+  <h2>Delete Miner</h2>
+  <form action="/deleteminer" method="POST">
+    <label>Username:</label>
+    <input type="text" name="username" required>
+
+    <button type="submit" style="background:#d9534f; color:white;">Delete Miner</button>
+  </form>
+
+  <!-- list of miners -->
   <h2>Miners</h2>
   <table>
     <thead>
@@ -36,54 +69,6 @@
           <td><%= m.username %></td>
           <td><%= m.hashrate || "0 H/s" %></td>
           <td><%= m.lastShare || "N/A" %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <!-- WORKERS -->
-  <h2>Workers</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Worker Name</th>
-        <th>Miner</th>
-        <th>Hashrate</th>
-        <th>Last Share</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% workers.forEach(w => { %>
-        <tr>
-          <td><%= w.name %></td>
-          <td><%= w.miner %></td>
-          <td><%= w.hashrate || "0 H/s" %></td>
-          <td><%= w.lastShare || "N/A" %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <!-- SHARES -->
-  <h2>Shares</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Miner</th>
-        <th>Worker</th>
-        <th>Difficulty</th>
-        <th>Accepted</th>
-        <th>Timestamp</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% shares.forEach(s => { %>
-        <tr>
-          <td><%= s.miner %></td>
-          <td><%= s.worker %></td>
-          <td><%= s.difficulty %></td>
-          <td><%= s.accepted ? "Yes" : "No" %></td>
-          <td><%= new Date(s.timestamp).toLocaleString() %></td>
         </tr>
       <% }) %>
     </tbody>
