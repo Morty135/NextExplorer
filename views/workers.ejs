@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Miner <%= miner.username %></title>
+  <style>
+    body { font-family: Arial; margin: 30px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+
+  <h1>Miner: <%= miner.username %></h1>
+  <a href="/dashboard">← Back to Dashboard</a>
+
+  <h2>Workers</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Worker Name</th>
+        <th>Valid Shares</th>
+        <th>Invalid Shares</th>
+        <th>Last Share</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% workers.forEach(w => { %>
+        <tr>
+          <td><%= w.name || w.username || ("Worker " + w._id) %></td>
+          <td><%= w.validShares %></td>
+          <td><%= w.invalidShares %></td>
+          <td><%= w.lastShare ? w.lastShare.toLocaleString() : "N/A" %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+</body>
+</html>

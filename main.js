@@ -90,6 +90,23 @@ app.get("/dashboard", requireAdmin, async (req, res) => {
     .sort({ timestamp: -1 })
     .limit(200);
 
+  for (const miner of miners) {
+      miner.validShares = await Share.countDocuments({
+        miner: miner._id,
+        accepted: true
+      });
+
+      miner.invalidShares = await Share.countDocuments({
+        miner: miner._id,
+        accepted: false
+      });
+
+    const last = await Share.findOne({ miner: miner._id })
+      .sort({ timestamp: -1 });
+
+    miner.lastShare = last ? last.timestamp : null;
+  }
+
   req.session.flash = req.session.flash || {};
   const flash = req.session.flash;
   req.session.flash = {};
@@ -101,6 +118,40 @@ app.get("/dashboard", requireAdmin, async (req, res) => {
     shares,
     success: flash.success,
     error: flash.error
+  });
+});
+
+
+
+app.get("/miner/:id", requireAdmin, async (req, res) => {
+  const minerId = req.params.id;
+
+  const miner = await Miner.findById(minerId);
+  if (!miner) return res.send("Miner not found");
+
+  const workers = await Worker.find({ miner: minerId });
+
+  for (const w of workers) {
+    w.validShares = await Share.countDocuments({
+      worker: w._id,
+      valid: true
+    });
+
+    w.invalidShares = await Share.countDocuments({
+      worker: w._id,
+      valid: false
+    });
+
+    const last = await Share.findOne({
+      worker: w._id
+    }).sort({ timestamp: -1 });
+
+    w.lastShare = last ? last.timestamp : null;
+  }
+
+  res.render("workers", {
+    miner,
+    workers
   });
 });
 

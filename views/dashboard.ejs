@@ -59,20 +59,22 @@
     <thead>
       <tr>
         <th>Miner Username</th>
-        <th>Hashrate</th>
+        <th>Valid Shares</th>
+        <th>Invalid Shares</th>
         <th>Last Share</th>
       </tr>
     </thead>
+
     <tbody>
       <% miners.forEach(m => { %>
         <tr>
-          <td><%= m.username %></td>
-          <td><%= m.hashrate || "0 H/s" %></td>
-          <td><%= m.lastShare || "N/A" %></td>
+          <td><a href="/miner/<%= m._id %>"><%= m.username %></a></td>
+          <td><%= m.validShares %></td>
+          <td><%= m.invalidShares %></td>
+          <td><%= m.lastShare ? m.lastShare.toLocaleString() : "N/A" %></td>
         </tr>
       <% }) %>
     </tbody>
   </table>
-
 </body>
 </html>
