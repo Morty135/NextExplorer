@@ -157,6 +157,24 @@ app.get("/miner/:id", requireAdmin, async (req, res) => {
 
 
 
+app.get("/worker/:id", requireAdmin, async (req, res) => {
+  const workerId = req.params.id;
+
+  const worker = await Worker.findById(workerId).populate("miner");
+  if (!worker) return res.send("Worker not found");
+
+  const shares = await Share.find({ worker: workerId })
+    .sort({ timestamp: -1 })
+    .limit(500); // safety cap, adjust if needed
+
+  res.render("shares", {
+    worker,
+    shares
+  });
+});
+
+
+
 app.post("/addminer", async (req, res) =>{
   const { username, password } = req.body;
   try 

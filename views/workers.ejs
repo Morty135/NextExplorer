@@ -29,7 +29,7 @@
     <tbody>
       <% workers.forEach(w => { %>
         <tr>
-          <td><%= w.name || w.username || ("Worker " + w._id) %></td>
+          <td><a href="/worker/<%= w._id %>"><%= w.name  %></a></td>
           <td><%= w.validShares %></td>
           <td><%= w.invalidShares %></td>
           <td><%= w.lastShare ? w.lastShare.toLocaleString() : "N/A" %></td>
