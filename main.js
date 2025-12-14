@@ -89,7 +89,7 @@ app.get("/dashboard", requireAdmin, async (req, res) => {
   const shares = await Share.find({})
     .sort({ timestamp: -1 })
     .limit(200);
-
+  
   for (const miner of miners) {
       miner.validShares = await Share.countDocuments({
         miner: miner._id,
@@ -134,12 +134,12 @@ app.get("/miner/:id", requireAdmin, async (req, res) => {
   for (const w of workers) {
     w.validShares = await Share.countDocuments({
       worker: w._id,
-      valid: true
+      accepted: true
     });
 
     w.invalidShares = await Share.countDocuments({
       worker: w._id,
-      valid: false
+      accepted: false
     });
 
     const last = await Share.findOne({
